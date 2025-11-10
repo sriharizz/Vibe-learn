@@ -1,0 +1,15 @@
+# Secrets
+backend/.env
+
+# Python backend
+backend/env/
+backend/__pycache__/
+*.pyc
+# Ignore virtual environments
+env/
+venv/
+
+# Node.js frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.DS_Store
