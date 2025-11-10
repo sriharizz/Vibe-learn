@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-dotenv
+requests
+pdfplumber
+google-generativeai
+sentence-transformers
+langchain
+huggingface-hub
+langchain_text_splitters
