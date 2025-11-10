@@ -2,8 +2,7 @@
 __pycache__/
 *.pyc
 
-# Environment
-/.venv
+
 
 # Secrets
 .env
