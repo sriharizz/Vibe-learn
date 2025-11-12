@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import { X, ChevronsRight } from 'lucide-react'; 
 
-// --- 1. UPDATE THE QuizQuestion INTERFACE ---
 export interface QuizQuestion {
   type: string;
   q: string;
   options: string[] | null;
   a: string;
-  topic_step: number; // <-- MUST HAVE THIS
+  topic_step: number;
 }
 
-// --- 2. DEFINE THE NEW RESULT TYPE ---
 export interface QuizResult {
   topic_step: number;
   correct: boolean;
@@ -19,21 +17,16 @@ export interface QuizResult {
 interface QuizModalProps {
   questions: QuizQuestion[];
   onClose: () => void;
-  // --- 3. UPDATE onComplete PROP ---
   onComplete: (results: QuizResult[]) => void;
 }
 
 const QuizModal: React.FC<QuizModalProps> = ({ questions, onClose, onComplete }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  
-  // --- 4. ADD new results state ---
   const [results, setResults] = useState<QuizResult[]>([]); 
-  
   const [showResult, setShowResult] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
-  // (Loading block is unchanged)
   if (!questions || questions.length === 0) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -51,17 +44,23 @@ const QuizModal: React.FC<QuizModalProps> = ({ questions, onClose, onComplete })
   const currentQuestion = questions[currentQuestionIndex];
   const totalQuestions = questions.length;
 
+  // --- THIS IS THE NEW, SMARTER LOGIC ---
   const handleAnswerSubmit = () => {
     if (!selectedAnswer) return;
 
-    const correct = selectedAnswer.toLowerCase() === currentQuestion.a.toLowerCase();
-    setIsCorrect(correct);
+    const answerLetter = selectedAnswer.split('.')[0].toUpperCase(); // Gets "C" from "C. Deterioration..."
+    const answerText = selectedAnswer.toLowerCase();
+    const correctLetter = currentQuestion.a.toUpperCase();
+    const correctText = currentQuestion.a.toLowerCase();
+
+    // Check if EITHER the letter matches OR the full text matches
+    const isAnswerCorrect = (answerLetter === correctLetter) || (answerText === correctText);
     
-    // --- 5. Create a result object ---
+    setIsCorrect(isAnswerCorrect);
+    
     const newResult: QuizResult = {
-      // Use fallback topic_step if missing, though backend should provide it
       topic_step: currentQuestion.topic_step || 1, 
-      correct: correct
+      correct: isAnswerCorrect
     };
     
     setShowResult(true);
@@ -71,20 +70,29 @@ const QuizModal: React.FC<QuizModalProps> = ({ questions, onClose, onComplete })
       setSelectedAnswer(null);
       
       const updatedResults = [...results, newResult];
-      setResults(updatedResults); // Save state for the next question
+      setResults(updatedResults); 
 
       if (currentQuestionIndex < totalQuestions - 1) {
         setCurrentQuestionIndex(i => i + 1);
       } else {
-        // --- 6. CALL onComplete WITH THE FULL RESULTS ARRAY ---
         onComplete(updatedResults);
       }
     }, 2000);
   };
+  // --- END OF NEW LOGIC ---
 
   const handleSkipQuiz = () => {
-    // --- 7. UPDATE SKIP LOGIC ---
     onComplete(results);
+  };
+
+  // --- NEW HELPER FUNCTION ---
+  // This checks if an option is the correct one, handling both letters AND text
+  const isOptionCorrect = (option: string, index: number): boolean => {
+    const optionLetter = String.fromCharCode(65 + index); // "A", "B", "C"
+    const correctLetter = currentQuestion.a.toUpperCase();
+    const correctText = currentQuestion.a.toLowerCase();
+    
+    return (optionLetter === correctLetter) || (option.toLowerCase() === correctText);
   };
 
   return (
@@ -109,24 +117,43 @@ const QuizModal: React.FC<QuizModalProps> = ({ questions, onClose, onComplete })
           <p className="text-lg font-semibold text-gray-800 mb-4">{currentQuestion.q}</p>
           <div className="space-y-3">
             {currentQuestion.type === 'mcq' && currentQuestion.options ? (
-              currentQuestion.options.map((option, index) => (
-                <button
-                  key={index}
-                  disabled={showResult}
-                  onClick={() => setSelectedAnswer(option)}
-                  className={`w-full text-left p-4 rounded-lg border-2 transition-all
-                    ${selectedAnswer === option
-                      ? 'border-purple-600 bg-purple-50 ring-2 ring-purple-300'
-                      : 'border-gray-300 hover:bg-gray-50'
-                    }
-                    ${showResult && currentQuestion.a === option ? 'bg-green-100 border-green-600' : ''}
-                    ${showResult && selectedAnswer === option && currentQuestion.a !== option ? 'bg-red-100 border-red-600' : ''}
-                  `}
-                >
-                  {option}
-                </button>
-              ))
+              // --- THIS SECTION IS NOW FIXED ---
+              currentQuestion.options.map((option, index) => {
+                
+                return (
+                  <button
+                    key={index}
+                    disabled={showResult}
+                    // This is the bug: save the OPTION text, not a letter
+                    onClick={() => setSelectedAnswer(option)}
+                    className={`w-full text-left p-4 rounded-lg border-2 transition-all
+                      ${
+                        // Check if this option is the one we selected
+                        selectedAnswer === option
+                        ? 'border-purple-600 bg-purple-50 ring-2 ring-purple-300'
+                        : 'border-gray-300 hover:bg-gray-50'
+                      }
+                      ${
+                        // Check if this option is the correct answer
+                        showResult && isOptionCorrect(option, index)
+                        ? 'bg-green-100 border-green-600' 
+                        : ''
+                      }
+                      ${
+                        // Check if we selected this AND it was wrong
+                        showResult && selectedAnswer === option && !isOptionCorrect(option, index)
+                        ? 'bg-red-100 border-red-600' 
+                        : ''
+                      }
+                    `}
+                  >
+                    {option}
+                  </button>
+                )
+              })
+              // --- END OF FIXED SECTION ---
             ) : (
+              // This text input part was already correct
               <input
                 type="text"
                 value={selectedAnswer || ''}

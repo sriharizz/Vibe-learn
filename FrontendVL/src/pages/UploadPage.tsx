@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Send, Paperclip, FileText, Image, Video, 
-  CheckCircle, AlertCircle, Loader2, Camera
+  CheckCircle, AlertCircle, Loader2 
+  // 1. Removed 'Camera' from this import
 } from 'lucide-react';
 import { useMoodContext } from '../App';
 import api, { streamApi } from '../services/api'; 
 import { useNavigate } from 'react-router-dom';
-import { VibeCheckModal } from '../components/upload/VibeCheckModal';
+// 2. Removed 'VibeCheckModal' import
 import ReactMarkdown from 'react-markdown';
 
 interface Message {
@@ -53,7 +54,7 @@ const UploadPage: React.FC = () => {
   const [pageStatus, setPageStatus] = useState<'success' | 'error' | 'loading' | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
   
-  const [isVibeCheckOpen, setIsVibeCheckOpen] = useState(false);
+  // 3. Removed 'isVibeCheckOpen' state
 
   // --- THIS IS THE UPDATED MOODS ARRAY ---
   const moods = [
@@ -242,10 +243,7 @@ const UploadPage: React.FC = () => {
 
   return (
     <>
-      <VibeCheckModal
-        isOpen={isVibeCheckOpen}
-        onClose={() => setIsVibeCheckOpen(false)}
-      />
+      {/* 4. Removed 'VibeCheckModal' component */}
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 h-screen flex flex-col">
         <div className="mb-6">
@@ -304,15 +302,7 @@ const UploadPage: React.FC = () => {
               </div>
             </div>
             
-            <div className="mt-4 pt-4 border-t border-gray-200">
-              <button
-                onClick={() => setIsVibeCheckOpen(true)}
-                className="w-full flex items-center justify-center p-3 rounded-lg border-2 border-dashed border-gray-300 text-gray-600 hover:border-purple-500 hover:text-purple-600 transition-all duration-200"
-              >
-                <Camera className="mr-2 h-5 w-5" />
-                <span className="font-medium">VibeCheck (Detect with Camera)</span>
-              </button>
-            </div>
+            {/* 5. Removed the 'VibeCheck (Detect with Camera)' button and its containing div */}
 
 
             {mood && energy && (

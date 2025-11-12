@@ -15,8 +15,8 @@ from typing import List, Optional, Dict, Any, AsyncGenerator, Tuple
 from dotenv import load_dotenv
 load_dotenv()
 
-from env.app.deps import get_current_user, oauth_2scheme
-from env.app.supabase_client import supabase, supabase_service
+from app.deps import get_current_user, oauth_2scheme
+from app.supabase_client import supabase, supabase_service
 from fastapi.security import OAuth2PasswordRequestForm
 import pdfplumber
 import io
@@ -159,9 +159,9 @@ async def me(user = Depends(get_current_user)):
     return {"ok": True, "user": user}
 
 
-# ---------- HELPER 1: "High-Quality Plan" Generator (Using Gemini) (Unchanged) ----------
+# ---------- HELPER 1: "High-Quality Plan" Generator (Using Pro) (CORRECT) ----------
 def _get_high_quality_plan_gemini(text_content: str) -> Tuple[str, List[str]]:
-    print("--- Calling Gemini model for HIGH-QUALITY plan preview ---")
+    print("--- Calling Gemini PRO model for HIGH-QUALITY plan preview ---")
     truncated_text = text_content[:20000] 
     prompt = f"""
     You are an expert curriculum designer. Based *only* on the text below, generate a rich, comprehensive study plan.
@@ -189,6 +189,7 @@ def _get_high_quality_plan_gemini(text_content: str) -> Tuple[str, List[str]]:
     Respond ONLY with the single JSON object:
     """
     try:
+        # --- This is correct: Use Pro for the single, high-quality call ---
         model = genai.GenerativeModel('models/gemini-pro-latest')
         response = model.generate_content(prompt)
         ai_json = safe_parse_json(response.text)
@@ -205,7 +206,7 @@ def _get_high_quality_plan_gemini(text_content: str) -> Tuple[str, List[str]]:
         return f"Study Plan for Document", ["Topic 1 (Gemini Error)", "Topic 2", "Topic 3"]
 
 
-# ---------- HELPER 2: Background "Compiler" Task (VIBE-AWARE) (UPDATED) ----------
+# ---------- HELPER 2: Background "Compiler" Task (Using Flash) (FIXED) ----------
 async def pre_generate_all_content_task(
     plan_id: int, 
     user_id: str, 
@@ -228,18 +229,15 @@ async def pre_generate_all_content_task(
 
     topics_from_db = [] 
     try:
-        # --- *** THIS IS THE CHANGE: Only get topics that are NOT generated *** ---
         topic_q = supabase_service.table("study_plan_topics") \
             .select("id, topic_title, step_number") \
             .eq("plan_id", plan_id) \
             .eq("is_content_generated", False) \
             .order("step_number", desc=False) \
             .execute()
-        # --- *** END OF CHANGE *** ---
             
         if not getattr(topic_q, "data", None):
             print("  > No topics found needing generation. Checking for final quiz...")
-            # We still continue, to check if the quiz needs to be generated
         else:
             topics_from_db = topic_q.data
             print(f"  > Found {len(topics_from_db)} topics to generate.")
@@ -249,13 +247,15 @@ async def pre_generate_all_content_task(
         return
 
     # --- Only configure model and run loop if there are topics to generate ---
+    model = None # Define model in outer scope
     if topics_from_db:
         try:
             gemini_key = os.environ.get("GEMINI_API_KEY")
             if not gemini_key:
                 raise Exception("GEMINI_API_KEY not found")
             genai.configure(api_key=gemini_key)
-            model = genai.GenerativeModel('models/gemini-pro-latest')
+            # --- *** FIX 1: USE FLASH FOR BULK CONTENT *** ---
+            model = genai.GenerativeModel('models/gemini-flash-latest')
         except Exception as e:
             print(f"  > ERROR: Background task failed to configure Gemini: {e}")
             return
@@ -271,7 +271,7 @@ async def pre_generate_all_content_task(
             persona = "You are VibeLearn, an expert-level technical tutor. The user is high-energy and focused."
             lesson_instruction = "Provide a detailed, expert-level explanation of this topic. Include nuances and technical details."
 
-        for topic in topics_from_db: # Use the renamed variable
+        for topic in topics_from_db: 
             topic_id = topic['id']
             topic_title = topic['topic_title']
             step_number = topic['step_number']
@@ -279,7 +279,6 @@ async def pre_generate_all_content_task(
             print(f"\n  > Generating content for: Topic {step_number}: {topic_title}")
 
             try:
-                # --- PROMPT IS NOW VIBE-AWARE (Unchanged) ---
                 prompt = f"""
                 {persona}
                 The user's current vibe is: mood={mood}, energy={energy}.
@@ -328,15 +327,12 @@ async def pre_generate_all_content_task(
                 
                 print(f"  > SUCCESS: Saved VIBE-AWARE content for {topic_title} to DB.")
                 
-                # --- *** FIX FOR STEP 4 (QUOTA) *** ---
-                print("  > ...Waiting 61s for rate limit...")
-                await asyncio.sleep(61) # Non-blocking sleep
+                # --- *** FIX 2: SLEEP 7s FOR FLASH FREE TIER (10 RPM) *** ---
+                print("  > ...Waiting 7s (Flash 10 RPM Limit)...")
+                await asyncio.sleep(7) # Non-blocking sleep for Flash free tier
 
             except Exception as e:
                 print(f"  > ERROR generating content for {topic_title}: {e}")
-                # --- *** CHANGE: NO SLEEP ON ERROR *** ---
-                # We log the error and continue to the next topic immediately.
-                pass
     
     # --- Check if quiz is already generated ---
     try:
@@ -364,7 +360,13 @@ async def pre_generate_all_content_task(
     topic_list_str = "\n".join([f"Step {t['step_number']}: {t['topic_title']}" for t in all_topics_for_quiz])
     
     try:
-        # --- *** FIX FOR STEP 2 (MCQs ONLY) *** ---
+        # Re-use the "Flash" model if it was initialized
+        if model is None:
+            gemini_key = os.environ.get("GEMINI_API_KEY")
+            if not gemini_key: raise Exception("GEMINI_API_KEY not found")
+            genai.configure(api_key=gemini_key)
+            model = genai.GenerativeModel('models/gemini-flash-latest')
+
         quiz_prompt = f"""
         You are VibeLearn, an expert AI quiz-maker.
         Based ONLY on the following context, generate a final quiz of 10-15 **multiple-choice ('mcq')** questions that comprehensively covers all the material.
@@ -412,7 +414,7 @@ async def pre_generate_all_content_task(
 # === END OF HELPER 2 ===
 
 
-# --- *** FIX FOR STEP 3 (CACHING) & RESUMABLE LOGIC *** ---
+# --- /upload-pdf (Unchanged logic, but benefits from Helper 1 change) ---
 @app.post("/upload-pdf")
 async def upload_pdf(
     background_tasks: BackgroundTasks,
@@ -435,9 +437,8 @@ async def upload_pdf(
     except Exception as e:
         print(f"Warning: could not read user_vibes: {e}")
 
-    # --- *** START OF UPDATED CACHING LOGIC *** ---
+    # --- Caching Logic (Unchanged) ---
     try:
-        # 1. Check for an existing plan with the same file and vibe
         existing_plan_q = supabase_service.table("study_plans") \
             .select("id, plan_title, generated_mood, generated_energy, is_plan_complete") \
             .eq("user_id", user_id) \
@@ -447,13 +448,9 @@ async def upload_pdf(
 
         if getattr(existing_plan_q, "data", None):
             plan = existing_plan_q.data[0]
-            
-            # 2. Check if vibes match
             if plan.get('generated_mood') == mood and plan.get('generated_energy') == energy:
                 print(f"--- CACHE HIT: Found existing plan {plan['id']} with same vibe. ---")
                 
-                # --- *** NEW RESUMABLE LOGIC *** ---
-                # 2a. Check if the plan is *actually* finished
                 if not plan.get('is_plan_complete'):
                     print(f"  > Plan {plan['id']} is incomplete. Restarting background task...")
                     background_tasks.add_task(
@@ -466,9 +463,7 @@ async def upload_pdf(
                     )
                 else:
                     print(f"  > Plan {plan['id']} is already complete.")
-                # --- *** END OF RESUMABLE LOGIC *** ---
                 
-                # 2b. Get the topics for the preview
                 topics_q = supabase_service.table("study_plan_topics") \
                     .select("step_number, topic_title") \
                     .eq("plan_id", plan['id']) \
@@ -476,7 +471,6 @@ async def upload_pdf(
                     .execute()
                 topics_preview = getattr(topics_q, "data", [])
                 
-                # 3. Return the existing plan, DO NOT generate a new one
                 return {
                     "message": f"Loaded existing plan '{plan['plan_title']}' from cache.",
                     "total_chunks_created": 0, 
@@ -487,7 +481,6 @@ async def upload_pdf(
                     }
                 }
             else:
-                # 4. Vibes are different, delete this old plan to make a new one
                 print(f"--- Vibe mismatch. Deleting old plan {plan['id']}. ---")
                 old_plan_ids = [plan['id']]
                 supabase_service.table("study_plan_topics").delete().in_("plan_id", old_plan_ids).execute()
@@ -497,9 +490,8 @@ async def upload_pdf(
 
     except Exception as e:
         print(f"Error during cache check: {e}")
-    # --- *** END OF UPDATED CACHING LOGIC *** ---
-
-    # --- (Rest of the function is the same, but now it only runs on a cache miss) ---
+    
+    # --- PDF Processing & Embedding (Unchanged) ---
     try:
         contents = await file.read()
     except Exception:
@@ -551,6 +543,7 @@ async def upload_pdf(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving document to pgvector: {str(e)}")
         
+    # --- Plan Generation (Now uses Pro) ---
     plan_title, topic_list = _get_high_quality_plan_gemini(all_text)
     
     try:
@@ -580,6 +573,7 @@ async def upload_pdf(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving 'shell' plan to DB: {str(e)}")
 
+    # --- Background Task (Now uses Flash) ---
     background_tasks.add_task(
         pre_generate_all_content_task, 
         plan_id=new_plan_id,
@@ -601,8 +595,9 @@ async def upload_pdf(
     }
 
 
-# ---------- HELPER 3: Gemini Streamer (Unchanged) ----------
-async def _stream_gemini_response(prompt: str, model_name: str = 'models/gemini-pro-latest') -> AsyncGenerator[str, None]:
+# ---------- HELPER 3: Gemini Streamer (Using Flash by default) (FIXED) ----------
+# --- *** FIX 3: DEFAULT TO FLASH *** ---
+async def _stream_gemini_response(prompt: str, model_name: str = 'models/gemini-flash-latest') -> AsyncGenerator[str, None]:
     try:
         model = genai.GenerativeModel(model_name)
         response_stream = await model.generate_content_async(prompt, stream=True)
@@ -614,13 +609,15 @@ async def _stream_gemini_response(prompt: str, model_name: str = 'models/gemini-
         print(f"!!!!!!!! ERROR during Gemini stream: {e} !!!!!!!!")
         yield f"\n\n**Error streaming response:** {e}"
 
-# ---------- Ask question (Unchanged) ----------
+# ---------- Ask question (Using Flash) (FIXED) ----------
 @app.post('/ask_question')
 async def askquestion(query: Query, user = Depends(get_current_user)):
     user_id = user.id
     embed_model = ml_models.get('embed_model')
     if embed_model is None:
         raise HTTPException(status_code=500, detail='AI model is not loaded')
+    
+    # --- Vibe & Embedding (Unchanged) ---
     current_mood = "neutral"
     current_energy = "medium"
     try:
@@ -635,6 +632,8 @@ async def askquestion(query: Query, user = Depends(get_current_user)):
         question_embedding = embed_model.encode(query.question).tolist()
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating query embedding: {str(e)}")
+    
+    # --- RAG Search (Unchanged) ---
     context_chunks = []
     similarities = []
     try:
@@ -654,6 +653,8 @@ async def askquestion(query: Query, user = Depends(get_current_user)):
             print(f"No relevant chunks found for: {query.question}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error querying DB: {str(e)}")
+
+    # --- Persona Prompt (Unchanged) ---
     persona_prompt = "You are VibeLearn, a helpful AI learning assistant."
     if current_mood == "focused":
         persona_prompt = "You are VibeLearn, an Expert Technician AI assistant. The user is focused. Be concise and technical."
@@ -662,15 +663,17 @@ async def askquestion(query: Query, user = Depends(get_current_user)):
     elif current_mood == "tired":
         persona_prompt = "You are VibeLearn, a Gentle Guide. The user is tired. Keep answers brief and kind."
     elif current_mood == "happy":
-        persona_prompt = "You are VibeLearn, an upbeat tutor. The user is happy. Keep the tone positive and concise."
+        persona_prompt = "You are VVibeLearn, an upbeat tutor. The user is happy. Keep the tone positive and concise."
     if current_energy == "low":
         persona_prompt += " Use short answers (one or two short paragraphs)."
     elif current_energy == "medium":
         persona_prompt += " Provide a concise but complete answer."
     elif current_energy == "high":
         persona_prompt += " You can provide a more detailed explanation and examples."
+
     RELEVANCE_THRESHOLD = 0.7
     is_relevant = bool(context_chunks and similarities and similarities[0] and similarities[0] > RELEVANCE_THRESHOLD)
+    
     if is_relevant:
         context_string = "\n\n".join(context_chunks)
         rag_prompt = f"""
@@ -682,9 +685,10 @@ Context:
 Question: {query.question}
 Answer (based only on context):
 """
-        print("--- Streaming RAG response ---")
+        print("--- Streaming RAG response (Flash) ---")
+        # --- *** FIX 4: EXPLICITLY USE FLASH *** ---
         return StreamingResponse(
-            _stream_gemini_response(rag_prompt, 'models/gemini-pro-latest'), 
+            _stream_gemini_response(rag_prompt, 'models/gemini-flash-latest'), 
             media_type="text/event-stream"
         )
     else:
@@ -695,9 +699,10 @@ Answer the user's question using general knowledge. If you don't know, say "I do
 User Question: {query.question}
 Answer:
 """
-        print("--- Streaming General Knowledge response ---")
+        print("--- Streaming General Knowledge response (Flash) ---")
+        # --- (This will now correctly use the Flash default) ---
         return StreamingResponse(
-            _stream_gemini_response(general_prompt, 'models/gemini-flash-latest'), 
+            _stream_gemini_response(general_prompt), 
             media_type="text/event-stream"
         )
 

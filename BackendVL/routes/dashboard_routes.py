@@ -161,7 +161,7 @@ async def get_topics_to_review(user = Depends(get_current_user)):
             .eq("user_id", user_id) \
             .lt("score", PASS_THRESHOLD) \
             .order("created_at", desc=True) \
-            .limit(5) \
+            .limit(7) \
             .execute()
 
         if getattr(review_resp, "data", None):

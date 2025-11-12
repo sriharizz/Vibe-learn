@@ -8,3 +8,9 @@ sentence-transformers
 langchain
 huggingface-hub
 langchain_text_splitters
+sentence-transformers
+python-multipart        
+supabase                
+jose
+pydantic[email]
+python-multipart

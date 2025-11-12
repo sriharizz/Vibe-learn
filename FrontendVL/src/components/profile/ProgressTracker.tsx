@@ -8,10 +8,13 @@ interface UserStats {
   average_score: number;
 }
 
+// components/profile/ProgressTracker.tsx
+
 interface SimplePlan {
   id: number;
   plan_title: string;
   file_name: string;
+  progress: number; // <-- ADD THIS LINE
 }
 
 interface ProgressTrackerProps {
@@ -52,9 +55,11 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ stats, plans }) => {
 
   // --- 4. Use the dynamic 'plans' data ---
   // We'll just show the first 4 plans for this component
+ // --- 4. Use the dynamic 'plans' data ---
+  // We'll just show the first 4 plans for this component
   const subjects = plans.slice(0, 4).map((plan, index) => ({
     name: plan.plan_title || plan.file_name,
-    progress: 0, // We don't track progress per-subject yet
+    progress: plan.progress, // <-- THIS IS THE FIX
     color: ['bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-orange-500'][index % 4],
   }));
 

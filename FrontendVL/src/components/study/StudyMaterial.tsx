@@ -1,6 +1,5 @@
 // components/study/StudyMaterial.tsx
 import React, { useState, useEffect } from 'react';
-// --- 1. IMPORT ArrowLeft ---
 import { ArrowRight, ArrowLeft, Loader2, Brain, CheckCircle, XCircle, Flag } from 'lucide-react'; 
 import ReactMarkdown from 'react-markdown';
 import { QuizQuestion } from './QuizModal'; 
@@ -16,7 +15,7 @@ export interface TopicContent {
 interface StudyMaterialProps {
   topic: TopicContent;
   onNextTopic: () => void;
-  onPreviousTopic: () => void; // <-- 2. ADD NEW PROP
+  onPreviousTopic: () => void;
   isLoading: boolean;
   isLastTopic: boolean; 
   onStartFinalQuiz: () => void; 
@@ -25,7 +24,7 @@ interface StudyMaterialProps {
 const StudyMaterial: React.FC<StudyMaterialProps> = ({ 
   topic, 
   onNextTopic,
-  onPreviousTopic, // <-- 3. GET NEW PROP
+  onPreviousTopic,
   isLoading,
   isLastTopic,
   onStartFinalQuiz
@@ -42,17 +41,37 @@ const StudyMaterial: React.FC<StudyMaterialProps> = ({
     setIsCorrect(false);
   }, [topic]);
 
+  // --- THIS IS THE NEW, SMARTER LOGIC ---
   const handleCheckpointSubmit = () => {
     if (!selectedAnswer || !checkpoint) return;
-    const correct = selectedAnswer.toLowerCase() === checkpoint.a.toLowerCase();
-    setIsCorrect(correct);
+
+    const answerLetter = selectedAnswer.split('.')[0].toUpperCase(); // Gets "C" from "C. Deterioration..."
+    const answerText = selectedAnswer.toLowerCase();
+    const correctLetter = checkpoint.a.toUpperCase();
+    const correctText = checkpoint.a.toLowerCase();
+
+    // Check if EITHER the letter matches OR the full text matches
+    const isAnswerCorrect = (answerLetter === correctLetter) || (answerText === correctText);
+    
+    setIsCorrect(isAnswerCorrect);
     setShowResult(true); 
   };
-  
-  // --- 4. UPDATE renderNextStepButton TO INCLUDE PREVIOUS BUTTON ---
-  const renderNextStepButton = () => {
+  // --- END OF NEW LOGIC ---
+
+  // --- NEW HELPER FUNCTION ---
+  // This checks if an option is the correct one, handling both letters AND text
+  const isOptionCorrect = (option: string, index: number): boolean => {
+    if (!checkpoint) return false;
+    const optionLetter = String.fromCharCode(65 + index); // "A", "B", "C"
+    const correctLetter = checkpoint.a.toUpperCase();
+    const correctText = checkpoint.a.toLowerCase();
     
-    // This is the "Next" or "Final Quiz" button
+    // Check if correct answer is this option's letter OR this option's text
+    return (optionLetter === correctLetter) || (option.toLowerCase() === correctText);
+  };
+  
+  const renderNextStepButton = () => {
+    // ... (This function is unchanged)
     const nextButton = isLastTopic ? (
       <button
         onClick={onStartFinalQuiz} 
@@ -81,11 +100,10 @@ const StudyMaterial: React.FC<StudyMaterialProps> = ({
       </button>
     );
 
-    // This is the new "Previous" button
     const prevButton = (
       <button
         onClick={onPreviousTopic}
-        disabled={isLoading || topic.step_number === 1} // Disable on topic 1
+        disabled={isLoading || topic.step_number === 1}
         className="w-full bg-gray-200 text-gray-800 py-3 px-6 rounded-lg font-semibold hover:bg-gray-300 transition-colors duration-200 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
       >
         {isLoading ? (
@@ -97,7 +115,6 @@ const StudyMaterial: React.FC<StudyMaterialProps> = ({
       </button>
     );
 
-    // Return them both in a flex container
     return (
       <div className="mt-6 flex flex-col md:flex-row gap-4">
         {prevButton}
@@ -105,14 +122,13 @@ const StudyMaterial: React.FC<StudyMaterialProps> = ({
       </div>
     );
   };
-  // --- END OF UPDATE ---
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
       <h2 className="text-2xl font-bold text-gray-800 mb-2">{topic.topic_title}</h2>
       <p className="text-sm text-gray-500 mb-6">Topic {topic.step_number}</p>
       
-      {/* (Main content and key points are unchanged) */}
+      {/* ... (Main content and key points are unchanged) ... */}
       <div className="prose lg:prose-lg max-w-none text-gray-700 space-y-4">
         <ReactMarkdown
           components={{
@@ -145,31 +161,47 @@ const StudyMaterial: React.FC<StudyMaterialProps> = ({
         </ul>
       </div>
 
-      {/* (Checkpoint logic is unchanged) */}
+      {/* --- THIS IS THE FIXED CHECKPOINT SECTION --- */}
       {checkpoint && (
         <div className="bg-white border-t border-gray-200 mt-8 pt-8">
           <h3 className="text-xl font-bold text-gray-800 mb-4">Checkpoint Question</h3>
           <p className="text-lg font-semibold text-gray-800 mb-4">{checkpoint.q}</p>
           <div className="space-y-3">
             {checkpoint.type === 'mcq' && checkpoint.options ? (
-              checkpoint.options.map((option: string, index: number) => (
-                <button
-                  key={index}
-                  disabled={showResult}
-                  onClick={() => setSelectedAnswer(option)}
-                  className={`w-full text-left p-4 rounded-lg border-2 transition-all
-                    ${selectedAnswer === option
-                      ? 'border-purple-600 bg-purple-50 ring-2 ring-purple-300'
-                      : 'border-gray-300 hover:bg-gray-50'
-                    }
-                    ${showResult && checkpoint.a === option ? 'bg-green-100 border-green-600' : ''}
-                    ${showResult && selectedAnswer === option && checkpoint.a !== option ? 'bg-red-100 border-red-600' : ''}
-                  `}
-                >
-                  {option}
-                </button>
-              ))
+              checkpoint.options.map((option: string, index: number) => {
+                return (
+                  <button
+                    key={index}
+                    disabled={showResult}
+                    // This saves the full text, which is what we want
+                    onClick={() => setSelectedAnswer(option)}
+                    className={`w-full text-left p-4 rounded-lg border-2 transition-all
+                      ${
+                        // Check if this option is the one we selected
+                        selectedAnswer === option
+                        ? 'border-purple-600 bg-purple-50 ring-2 ring-purple-300'
+                        : 'border-gray-300 hover:bg-gray-50'
+                      }
+                      ${
+                        // Check if this option is the correct answer (using new helper)
+                        showResult && isOptionCorrect(option, index)
+                        ? 'bg-green-100 border-green-600' 
+                        : ''
+                      }
+                      ${
+                        // Check if we selected this AND it was wrong (using new helper)
+                        showResult && selectedAnswer === option && !isOptionCorrect(option, index)
+                        ? 'bg-red-100 border-red-600' 
+                        : ''
+                      }
+                    `}
+                  >
+                    {option}
+                  </button>
+                )
+              })
             ) : (
+              // This text input part was already correct
               <input
                 type="text"
                 value={selectedAnswer || ''}
@@ -181,8 +213,9 @@ const StudyMaterial: React.FC<StudyMaterialProps> = ({
             )}
           </div>
           {showResult && (
-            <div className={`p-4 rounded-lg my-4 flex items-center ${isCorrect ? 'bg-green-1Player-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            <div className={`p-4 rounded-lg my-4 flex items-center ${isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
               {isCorrect ? <CheckCircle className="mr-2" /> : <XCircle className="mr-2" />}
+              {/* This is the final fix for the message */}
               {isCorrect ? 'Correct! Well done.' : `Not quite. The correct answer is: ${checkpoint.a}`}
             </div>
           )}
@@ -199,6 +232,8 @@ const StudyMaterial: React.FC<StudyMaterialProps> = ({
           )}
         </div>
       )}
+      {/* --- END OF FIXED SECTION --- */}
+
       {!checkpoint && (
         renderNextStepButton()
       )}
