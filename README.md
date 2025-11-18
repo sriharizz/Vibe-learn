@@ -7,7 +7,7 @@ VibeLearn is a full-stack, **GenAI-powered educational platform** that dynamical
 
 Built with a **FastAPI** backend and **React** frontend, it solves the problem of "cognitive mismatch" by ensuring the difficulty of the material matches the user's current capacity to learn.
 
-[![Watch the VibeLearn Demo](https://youtu.be/NuquJz_gWXs)
+[Watch the VibeLearn Demo](https://youtu.be/NuquJz_gWXs)
 
 ---
 
