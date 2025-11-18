@@ -95,26 +95,26 @@ cd VibeLearn
 ### 2\. Backend Setup
 
 bash
-cd backend
-python -m venv env
-source env/bin/activate  # (or .\env\Scripts\activate on Windows)
-pip install -r requirements.txt
+*cd backend
+*python -m venv env
+*source env/bin/activate  # (or .\env\Scripts\activate on Windows)
+*pip install -r requirements.txt
 
 # Create a .env file in the /backend folder with these keys:
-# SUPABASE_URL=your_supabase_url
-# SUPABASE_SERVICE_ROLE_KEY=your_service_key
-# GEMINI_API_KEY=your_gemini_key
-# HF_TOKEN=your_huggingface_token
+ SUPABASE_URL=your_supabase_url
+ SUPABASE_SERVICE_ROLE_KEY=your_service_key
+ GEMINI_API_KEY=your_gemini_key
+ HF_TOKEN=your_huggingface_token
 
 uvicorn main:app --reload
 
 
 ### 3\. Frontend Setup
 
-bash
-cd frontend
-npm install
-npm run dev
+*bash
+*cd frontend
+*npm install
+*npm run dev
 
 
 
