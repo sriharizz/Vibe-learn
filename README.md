@@ -149,7 +149,5 @@ We are actively working on extending VibeLearn with these advanced features:
   - Generative AI Integration (RAG, Prompt Engineering)
   - React/TypeScript Frontend Architecture
 
-**Status:** ✅ MVP Complete & Deployed.
-*This project is currently being optimized for the Softius Systems Data Science Internship application.*
-
+**Status:** ✅ MVP Complete 
 If you have any feedback or suggestions, feel free to reach out\!
