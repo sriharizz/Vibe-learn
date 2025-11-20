@@ -89,7 +89,7 @@ The Pomodoro timer dynamically calculates the optimal session length to prevent 
 ### 1. Clone the Repository
 bash
 git clone 
-[https://github.com/yourusername/VibeLearn.git](https://github.com/sriharizz/Vibe-learn.git)
+[https://github.com/sriharizz/Vibe-learn.git](https://github.com/sriharizz/Vibe-learn.git)
 cd Vibe-learn
 
 ### 2\. Backend Setup
