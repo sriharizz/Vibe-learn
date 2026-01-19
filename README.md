@@ -88,11 +88,12 @@ PREREQUISITES
 
 
 1. CLONE THE REPOSITORY
-* git clone https://github.com/sriharizz/Vibe-learn.git
-cd Vibe-learn
+ git clone https://github.com/sriharizz/Vibe-learn.git
+ 
+ cd Vibe-learn
 
 2. BACKEND SETUP
----------------
+
 cd BackendVL
 
 python -m venv env
@@ -102,7 +103,7 @@ source env/bin/activate   # (or .\env\Scripts\activate on Windows)
 pip install -r requirements.txt
 
 3. ENVIRONMENT VARIABLES
-------------------------
+
 Create a .env file inside the BackendVL folder and add:
 
 
