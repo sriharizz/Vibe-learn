@@ -1,4 +1,3 @@
-
 # 🧠 VibeLearn: Adaptive AI Study Assistant
 
 > **Learning that adapts to *you*, not the other way around.**
@@ -64,92 +63,78 @@ The Pomodoro timer dynamically calculates the optimal session length to prevent 
 
 ## 🏗️ System Architecture
 
-1.  **Input:** User uploads a PDF and sets Vibe (Mood/Energy).
-2.  **Cache Layer:** System checks the `study_plans` database for an existing plan with the **same file hash AND same vibe**.
+1. **Input:** User uploads a PDF and sets Vibe (Mood/Energy).
+2. **Cache Layer:** System checks the `study_plans` database for an existing plan with the **same file hash AND same vibe**.
     * *Cache Hit:* Loads instantly.
     * *Partial Hit (Resumable):* If a plan exists but was interrupted (e.g., by API quotas), the system **auto-resumes** generation only for the missing topics.
-3.  **Processing:**
+3. **Processing:**
     * PDF is parsed, chunked, and embedded into vectors.
     * Background worker sequentially calls Gemini API to generate Lessons, Key Points, and Quizzes (enforcing JSON output).
-4.  **Session Flow:** User studies topic-by-topic.
+4. **Session Flow:** User studies topic-by-topic.
     * **"Next Topic"** marks progress in DB.
     * **"Timer End"** triggers a cumulative quiz.
-5.  **Analytics:** Quiz results are analyzed per topic. Failed topics are logged to the `quiz_history` table to populate the "Topics to Review" dashboard.
+5. **Analytics:** Quiz results are analyzed per topic. Failed topics are logged to the `quiz_history` table to populate the "Topics to Review" dashboard.
 
 ---
 
 ## 💻 Local Setup Guide
-PREREQUISITES
--------------
-- Node.js & npm
-- Python 3.10+
-- Supabase Account
-- Google Gemini API Key
 
+### Prerequisites
+* Node.js & npm
+* Python 3.10+
+* Supabase Account
+* Google Gemini API Key
 
-1. CLONE THE REPOSITORY
- git clone https://github.com/sriharizz/Vibe-learn.git
- 
- cd Vibe-learn
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/sriharizz/Vibe-learn.git](https://github.com/sriharizz/Vibe-learn.git)
+cd Vibe-learn
+```
 
-2. BACKEND SETUP
-
+### 2. Backend Setup
+```bash
 cd BackendVL
-
 python -m venv env
-
 source env/bin/activate   # (or .\env\Scripts\activate on Windows)
-
 pip install -r requirements.txt
 
-3. ENVIRONMENT VARIABLES
+# Create a .env file inside the BackendVL folder and add:
+# SUPABASE_URL=your_supabase_url
+# SUPABASE_SERVICE_ROLE_KEY=your_service_key
+# GEMINI_API_KEY=your_gemini_key
+# HF_TOKEN=your_huggingface_token
 
-Create a .env file inside the BackendVL folder and add:
-
-
-SUPABASE_URL=your_supabase_url
-
-SUPABASE_SERVICE_ROLE_KEY=your_service_key
-
-GEMINI_API_KEY=your_gemini_key
-
-HF_TOKEN=your_huggingface_token
-
-4. RUN BACKEND SERVER
----------------------
 uvicorn main:app --reload
+```
 
-5. FRONTEND SETUP
-------------------
-Open a new terminal and run:
-
+### 3. Frontend Setup
+```bash
+# Open a new terminal
 cd ../FrontendVL
-
 npm install
-
 npm run dev
+```
+
+---
 
 ## 🔮 Future Roadmap
 
 We are actively working on extending VibeLearn with these advanced features:
 
-  * **📸 Passive Vibe Check (Biometric Sensing):**
+* **📸 Passive Vibe Check (Biometric Sensing):**
+    * **Goal:** Remove manual input.
+    * **Tech:** Implement a webcam-based emotion detection system using **OpenCV** and **DeepFace**.
+    * **Function:** Automatically detects signs of fatigue or stress during a session and dynamically prompts the user to take a break or lowers the quiz difficulty in real-time.
+* **📹 Integrated Recommendations Engine:**
+    * **Goal:** Provide external context for difficult topics.
+    * **Tech:** A custom scraping engine.
+    * **Function:** When a user fails a topic, the system will automatically fetch relevant YouTube videos and LeetCode/GeeksforGeeks practice problems specific to that failed concept.
+* **☁️ Microservices Architecture:**
+    * **Goal:** Massive scalability.
+    * **Tech:** **Celery** + **Redis**.
+    * **Function:** Decoupling the compilation worker from the main API to handle thousands of concurrent PDF uploads without blocking the server.
 
-      * **Goal:** Remove manual input.
-      * **Tech:** Implement a webcam-based emotion detection system using **OpenCV** and **DeepFace**.
-      * **Function:** Automatically detects signs of fatigue or stress during a session and dynamically prompts the user to take a break or lowers the quiz difficulty in real-time.
-
-  * **📹 Integrated Recommendations Engine:**
-
-      * **Goal:** Provide external context for difficult topics.
-      * **Tech:** A custom scraping engine.
-      * **Function:** When a user fails a topic, the system will automatically fetch relevant YouTube videos and LeetCode/GeeksforGeeks practice problems specific to that failed concept.
-
-  * **☁️ Microservices Architecture:**
-
-      * **Goal:** Massive scalability.
-      * **Tech:** **Celery** + **Redis**.
-      * **Function:** Decoupling the compilation worker from the main API to handle thousands of concurrent PDF uploads without blocking the server.
+---
 
 ## 👤 Author & Project Status
 
