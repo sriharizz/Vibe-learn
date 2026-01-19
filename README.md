@@ -85,10 +85,9 @@ The Pomodoro timer dynamically calculates the optimal session length to prevent 
 * Python 3.10+
 * Supabase Account
 * Google Gemini API Key
-
 ### 1. Clone the Repository
 
-git clone [https://github.com/sriharizz/Vibe-learn.git](https://github.com/sriharizz/Vibe-learn.git)
+git clone https://github.com/sriharizz/Vibe-learn.git
 cd Vibe-learn
 
 cd BackendVL
@@ -96,17 +95,17 @@ python -m venv env
 source env/bin/activate # (or .\env\Scripts\activate on Windows)
 pip install -r requirements.txt
 
-# Create a .env file in the /BackendVL folder with these keys:
-# SUPABASE_URL=your_supabase_url
-# SUPABASE_SERVICE_ROLE_KEY=your_service_key
-# GEMINI_API_KEY=your_gemini_key
-# HF_TOKEN=your_huggingface_token
+ Create a .env file in the /BackendVL folder with these keys:
+ SUPABASE_URL=your_supabase_url
+ SUPABASE_SERVICE_ROLE_KEY=your_service_key
+ GEMINI_API_KEY=your_gemini_key
+ HF_TOKEN=your_huggingface_token
 
 uvicorn main:app --reload
 
 cd ../FrontendVL
 npm install
-npm run dev```
+npm run dev `c
 
 
 ## 🔮 Future Roadmap
