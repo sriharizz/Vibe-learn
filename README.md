@@ -87,35 +87,26 @@ The Pomodoro timer dynamically calculates the optimal session length to prevent 
 * Google Gemini API Key
 
 ### 1. Clone the Repository
-bash
-git clone 
-[https://github.com/sriharizz/Vibe-learn.git](https://github.com/sriharizz/Vibe-learn.git)
+```bash
+git clone [https://github.com/sriharizz/Vibe-learn.git](https://github.com/sriharizz/Vibe-learn.git)
 cd Vibe-learn
 
-### 2\. Backend Setup
+cd BackendVL
+python -m venv env
+source env/bin/activate # (or .\env\Scripts\activate on Windows)
+pip install -r requirements.txt
 
-bash
-*cd backend
-*python -m venv env
-*source env/bin/activate  # (or .\env\Scripts\activate on Windows)
-*pip install -r requirements.txt
-
-# Create a .env file in the /backend folder with these keys:
- SUPABASE_URL=your_supabase_url
- SUPABASE_SERVICE_ROLE_KEY=your_service_key
- GEMINI_API_KEY=your_gemini_key
- HF_TOKEN=your_huggingface_token
+# Create a .env file in the /BackendVL folder with these keys:
+# SUPABASE_URL=your_supabase_url
+# SUPABASE_SERVICE_ROLE_KEY=your_service_key
+# GEMINI_API_KEY=your_gemini_key
+# HF_TOKEN=your_huggingface_token
 
 uvicorn main:app --reload
 
-
-### 3\. Frontend Setup
-
-*bash
-*cd frontend
-*npm install
-*npm run dev
-
+cd ../FrontendVL
+npm install
+npm run dev
 
 
 ## 🔮 Future Roadmap
@@ -140,14 +131,13 @@ We are actively working on extending VibeLearn with these advanced features:
       * **Tech:** **Celery** + **Redis**.
       * **Function:** Decoupling the compilation worker from the main API to handle thousands of concurrent PDF uploads without blocking the server.
 
-
 ## 👤 Author & Project Status
 
-**VibeLearn** is a personal portfolio project developed by **[Your Name]** to demonstrate full-stack engineering capabilities, specifically in:
+**VibeLearn** is a personal portfolio project developed by **Sri Hari** to demonstrate full-stack engineering capabilities, specifically in:
 
-  - Asynchronous System Design (FastAPI/Python)
-  - Generative AI Integration (RAG, Prompt Engineering)
-  - React/TypeScript Frontend Architecture
+* Asynchronous System Design (FastAPI/Python)
+* Generative AI Integration (RAG, Prompt Engineering)
+* React/TypeScript Frontend Architecture
 
-**Status:** ✅ MVP Complete 
-If you have any feedback or suggestions, feel free to reach out\!
+**Status:** ✅ MVP Complete
+If you have any feedback or suggestions, feel free to reach out!
