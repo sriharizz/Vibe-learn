@@ -87,7 +87,7 @@ The Pomodoro timer dynamically calculates the optimal session length to prevent 
 * Google Gemini API Key
 
 ### 1. Clone the Repository
-```bash
+
 git clone [https://github.com/sriharizz/Vibe-learn.git](https://github.com/sriharizz/Vibe-learn.git)
 cd Vibe-learn
 
@@ -106,7 +106,7 @@ uvicorn main:app --reload
 
 cd ../FrontendVL
 npm install
-npm run dev
+npm run dev```
 
 
 ## 🔮 Future Roadmap
