@@ -88,18 +88,15 @@ PREREQUISITES
 
 
 1. CLONE THE REPOSITORY
-----------------------
 git clone https://github.com/sriharizz/Vibe-learn.git
 cd Vibe-learn
 
-
 2. BACKEND SETUP
-----------------
+---------------
 cd BackendVL
 python -m venv env
 source env/bin/activate   # (or .\env\Scripts\activate on Windows)
 pip install -r requirements.txt
-
 
 3. ENVIRONMENT VARIABLES
 ------------------------
@@ -110,11 +107,9 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_key
 GEMINI_API_KEY=your_gemini_key
 HF_TOKEN=your_huggingface_token
 
-
 4. RUN BACKEND SERVER
 ---------------------
 uvicorn main:app --reload
-
 
 5. FRONTEND SETUP
 ------------------
@@ -123,7 +118,6 @@ Open a new terminal and run:
 cd ../FrontendVL
 npm install
 npm run dev
-
 
 ## 🔮 Future Roadmap
 
