@@ -77,6 +77,21 @@ The Pomodoro timer dynamically calculates the optimal session length to prevent 
 
 ---
 
+## 📸 Screenshots
+
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/5d0929fa-cef9-4eed-a7b1-4c9f165a051e" />
+<img width="1919" height="1076" alt="image" src="https://github.com/user-attachments/assets/f0a8b575-c75b-4a7e-9489-266f6cf9b20a" />
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/4ab5c31c-7b78-4f80-b47a-d64eccb79d6a" />
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/372b05d2-127c-4539-a81a-bad977febd43" />
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/9b759dc3-1faa-4c18-af20-43613308a2a0" />
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/a557b58e-2176-4c14-b98e-0e39778ae937" />
+<img width="1919" height="979" alt="image" src="https://github.com/user-attachments/assets/69e82cbb-0522-4669-b9a9-3883169d6671" />
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/cfcd93a8-6c0a-49f9-9320-c60cba92061d" />
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/8c26f2ca-e1ce-4bf7-86ea-b8940bf110a1" />
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/b9443048-c6c1-4c25-be43-646217d753d9" />
+<img width="1919" height="1079" alt="image" src="https://github.com/user-attachments/assets/b1ba2980-e1ca-47ce-9551-cf26c33f0b32" />
+
+---
 ## 💻 Local Setup Guide
 
 ### Prerequisites
